@@ -61,8 +61,10 @@ router.post('/message', async (req, res) => {
     const normalized = userMessage.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '');
     const isGreeting = GREETING_WORDS.some(w => normalized === w || normalized.startsWith(w + " "));
 
+    const dbReady = mongoose.connection.readyState === 1;
+
     let business = null;
-    if (mongoose.connection.readyState === 1) {
+    if (dbReady) {
       try {
         business = await Business.findById(businessId);
       } catch (dbErr) {
@@ -76,12 +78,19 @@ router.post('/message', async (req, res) => {
       .map(faq => `Q: ${faq.question}\nA: ${faq.answer}`)
       .join('\n\n');
 
-    const dbReady = mongoose.connection.readyState === 1;
-
     let conversation = null;
     if (dbReady) {
       try {
         conversation = await Conversation.findOne({ sessionId });
+        if (!conversation) {
+          conversation = new Conversation({
+            businessId,
+            sessionId,
+            customerName: 'Customer',
+            messages: [],
+            unresolvedTopics: [],
+          });
+        }
       } catch (dbErr) { /* skip */ }
     }
 
@@ -93,7 +102,7 @@ router.post('/message', async (req, res) => {
         customerName: 'Customer',
         messages: [],
         unresolvedTopics: [],
-        _isPlain: true, // flag to skip Mongoose save
+        _isPlain: true,
       };
     }
 
@@ -171,9 +180,13 @@ YOUR INSTRUCTIONS:
     conversation.messages.push({ role: 'user', content: userMessage });
     conversation.messages.push({ role: 'ai', content: aiReplyText, flagged: cantAnswer });
 
-    // Save in background if DB is ready and conversation is a real Mongoose doc
+    // Persist new and existing conversations when DB is available
     if (dbReady && !conversation._isPlain) {
-      conversation.save().catch(saveErr => console.warn('Background save:', saveErr.message));
+      try {
+        await conversation.save();
+      } catch (saveErr) {
+        console.warn('Conversation save failed:', saveErr.message);
+      }
     }
 
     return res.status(200).json({
@@ -189,6 +202,36 @@ YOUR INSTRUCTIONS:
       flagged: false,
       sessionId: req.body.sessionId || 'sess_default',
     });
+  }
+});
+
+// POST /api/chat/feedback
+router.post('/feedback', async (req, res) => {
+  try {
+    const { sessionId, rating } = req.body;
+
+    if (!sessionId || !['up', 'down'].includes(rating)) {
+      return res.status(400).json({ error: 'sessionId and rating (up|down) are required' });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' });
+    }
+
+    const conversation = await Conversation.findOneAndUpdate(
+      { sessionId },
+      { rating },
+      { new: true }
+    );
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    return res.status(200).json({ sessionId, rating: conversation.rating });
+  } catch (err) {
+    console.error('Feedback error:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
   }
 });
 

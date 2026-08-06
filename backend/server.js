@@ -41,21 +41,19 @@ const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 async function startServer() {
-  if (MONGODB_URI && MONGODB_URI !== 'your_mongodb_atlas_uri') {
-    const directUri = 'mongodb://vdhanush02009_db_user:Auo42Ai7bhSWq7FG@ac-snnnphh-shard-00-00.ey1k9py.mongodb.net:27017,ac-snnnphh-shard-00-01.ey1k9py.mongodb.net:27017,ac-snnnphh-shard-00-02.ey1k9py.mongodb.net:27017/cxbot?tls=true&authSource=admin';
+  if (!MONGODB_URI || MONGODB_URI === 'your_mongodb_atlas_uri') {
+    console.error('MONGODB_URI is not set. Set it in backend/.env before starting the server.');
+  } else {
     try {
-      await mongoose.connect(directUri, { serverSelectionTimeoutMS: 8000, family: 4 });
+      await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 8000, family: 4 });
       console.log('Connected to MongoDB Atlas');
     } catch (err) {
       console.error('MongoDB connection failed:', err.message);
-      // Try SRV as fallback
-      try {
-        await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 8000, family: 4 });
-        console.log('Connected to MongoDB Atlas (SRV)');
-      } catch (err2) {
-        console.error('MongoDB SRV fallback failed:', err2.message);
-      }
     }
+  }
+
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your_secret_key') {
+    console.warn('JWT_SECRET is missing or insecure. Set a strong secret in backend/.env.');
   }
 
   app.listen(PORT, () => {

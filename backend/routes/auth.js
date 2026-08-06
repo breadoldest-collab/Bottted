@@ -18,52 +18,58 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required')
 });
 
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret === 'your_secret_key') {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  return secret;
+}
+
+function requireDb(res) {
+  if (mongoose.connection.readyState !== 1) {
+    res.status(503).json({ error: 'Database unavailable. Please try again shortly.' });
+    return false;
+  }
+  return true;
+}
+
 // POST /api/auth/register
 router.post('/register', validate(registerSchema), async (req, res) => {
   try {
+    if (!requireDb(res)) return;
+
     const { businessName, email, password } = req.body;
 
-    if (mongoose.connection.readyState === 1) {
-      const existing = await Business.findOne({ email });
-      if (existing) {
-        return res.status(409).json({ error: 'Email already registered' });
-      }
-
-      const passwordHash = await bcrypt.hash(password, 10);
-      const newBusiness = new Business({
-        businessName,
-        email,
-        passwordHash
-      });
-      await newBusiness.save();
-
-      const token = jwt.sign(
-        { businessId: newBusiness._id },
-        process.env.JWT_SECRET || 'your_secret_key',
-        { expiresIn: '7d' }
-      );
-
-      return res.status(201).json({
-        token,
-        businessId: newBusiness._id,
-        businessName: newBusiness.businessName,
-        email: newBusiness.email
-      });
-    } else {
-      // Offline / connecting fallback
-      const token = jwt.sign(
-        { businessId: '6a738d01f9168dfcbc149363' },
-        process.env.JWT_SECRET || 'your_secret_key',
-        { expiresIn: '7d' }
-      );
-      return res.status(201).json({
-        token,
-        businessId: '6a738d01f9168dfcbc149363',
-        businessName,
-        email
-      });
+    const existing = await Business.findOne({ email });
+    if (existing) {
+      return res.status(409).json({ error: 'Email already registered' });
     }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const newBusiness = new Business({
+      businessName,
+      email,
+      passwordHash
+    });
+    await newBusiness.save();
+
+    const token = jwt.sign(
+      { businessId: newBusiness._id },
+      getJwtSecret(),
+      { expiresIn: '7d' }
+    );
+
+    return res.status(201).json({
+      token,
+      businessId: newBusiness._id,
+      businessName: newBusiness.businessName,
+      email: newBusiness.email
+    });
   } catch (err) {
+    if (err.message === 'JWT_SECRET is not configured') {
+      return res.status(500).json({ error: 'Server auth is misconfigured' });
+    }
     return res.status(500).json({ error: err.message || 'Internal server error' });
   }
 });
@@ -71,22 +77,9 @@ router.post('/register', validate(registerSchema), async (req, res) => {
 // POST /api/auth/login
 router.post('/login', validate(loginSchema), async (req, res) => {
   try {
-    const { email, password } = req.body;
+    if (!requireDb(res)) return;
 
-    if (mongoose.connection.readyState !== 1) {
-      // Fail-safe authentication when MongoDB connection is establishing or offline
-      const token = jwt.sign(
-        { businessId: '6a738d01f9168dfcbc149363' },
-        process.env.JWT_SECRET || 'your_secret_key',
-        { expiresIn: '7d' }
-      );
-      return res.status(200).json({
-        token,
-        businessId: '6a738d01f9168dfcbc149363',
-        businessName: 'My Test Business',
-        email
-      });
-    }
+    const { email, password } = req.body;
 
     const business = await Business.findOne({ email });
     if (!business) {
@@ -100,7 +93,7 @@ router.post('/login', validate(loginSchema), async (req, res) => {
 
     const token = jwt.sign(
       { businessId: business._id },
-      process.env.JWT_SECRET || 'your_secret_key',
+      getJwtSecret(),
       { expiresIn: '7d' }
     );
 
@@ -112,6 +105,9 @@ router.post('/login', validate(loginSchema), async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
+    if (err.message === 'JWT_SECRET is not configured') {
+      return res.status(500).json({ error: 'Server auth is misconfigured' });
+    }
     return res.status(500).json({ error: err.message || 'Internal server error' });
   }
 });
