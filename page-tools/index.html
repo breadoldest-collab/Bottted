@@ -773,9 +773,51 @@
         },
         off() { clearInterval(S.tmrI); rm('__pt_tmr__'); }
       },
-      { key: 'edit', section: 'Page', name: 'Editable page', desc: 'Click any text and type', k: '6',
-        on() { document.body.contentEditable = 'true'; document.body.style.outline = 'none'; },
-        off() { document.body.contentEditable = 'false'; }
+      { key: 'edit', section: 'Page', name: 'Editable page', desc: 'Type, highlight, fill blocks', k: '6',
+        on() {
+          document.body.contentEditable = 'true';
+          document.body.style.outline = 'none';
+          const cockpit = document.getElementById('panel');
+          if (cockpit) cockpit.contentEditable = 'false';
+          rm('__pt_ed__');
+          const bar = el('div', '__pt_ed__', 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:2147483640;display:flex;gap:12px;align-items:center;background:rgba(10,12,20,.94);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:8px 16px;font:12px Outfit,system-ui;color:#c5cad8;box-shadow:0 16px 40px rgba(0,0,0,.45);white-space:nowrap');
+          bar.contentEditable = 'false';
+          bar.innerHTML = 'Select text'
+            + '<label style="display:flex;align-items:center;gap:6px">Bg <input id="__pt_h__" type="color" value="#ffe566" style="width:28px;height:22px;border:0;background:none;cursor:pointer"></label>'
+            + '<label style="display:flex;align-items:center;gap:6px">Text <input id="__pt_f__" type="color" value="#6ea8ff" style="width:28px;height:22px;border:0;background:none;cursor:pointer"></label>'
+            + '<label style="display:flex;align-items:center;gap:6px">Block <input id="__pt_bg__" type="color" value="#1a2450" style="width:28px;height:22px;border:0;background:none;cursor:pointer"></label>'
+            + '<span style="font-size:11px;color:#4a5166">Shift-click a block to fill</span>';
+          document.body.appendChild(bar);
+          S.edRange = null;
+          S.edSave = function () {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount && !bar.contains(sel.anchorNode)) S.edRange = sel.getRangeAt(0).cloneRange();
+          };
+          document.addEventListener('mouseup', S.edSave);
+          document.addEventListener('keyup', S.edSave);
+          function paint(cmd, col) {
+            const sel = window.getSelection();
+            if (S.edRange) { sel.removeAllRanges(); sel.addRange(S.edRange); }
+            document.execCommand('styleWithCSS', false, true);
+            document.execCommand(cmd, false, col);
+          }
+          bar.querySelector('#__pt_h__').addEventListener('input', e => paint('hiliteColor', e.target.value));
+          bar.querySelector('#__pt_f__').addEventListener('input', e => paint('foreColor', e.target.value));
+          S.edClick = function (e) {
+            if (!e.shiftKey) return;
+            if (e.target.closest('#__pt_ed__,#panel,#__pt__')) return;
+            e.preventDefault();
+            e.target.style.backgroundColor = document.getElementById('__pt_bg__').value;
+          };
+          document.addEventListener('mousedown', S.edClick, true);
+        },
+        off() {
+          document.body.contentEditable = 'false';
+          document.removeEventListener('mouseup', S.edSave);
+          document.removeEventListener('keyup', S.edSave);
+          document.removeEventListener('mousedown', S.edClick, true);
+          rm('__pt_ed__');
+        }
       },
       { key: 'imgres', section: 'Inspect', name: 'Image size on hover', desc: 'Natural resolution of any image', k: '7',
         on() {
@@ -982,9 +1024,24 @@
         {key:'timer',icon:'◷',name:'Tab timer',desc:'Time on page',
           on:function(){var start=Date.now(),d=el('div','__pt_tmr__','position:fixed;bottom:16px;right:16px;z-index:2147483640;background:rgba(6,8,14,.9);color:#ccc;padding:7px 12px;font:12px ui-monospace,monospace;border-radius:10px');document.body.appendChild(d);S.tmrI=setInterval(function(){var s=Math.floor((Date.now()-start)/1000);d.textContent=Math.floor(s/60)+'m '+String(s%60).padStart(2,'0')+'s';},1000);},
           off:function(){clearInterval(S.tmrI);rm('__pt_tmr__');}},
-        {key:'edit',icon:'✎',name:'Edit page',desc:'Type anywhere',
-          on:function(){document.body.contentEditable='true';document.body.style.outline='none';},
-          off:function(){document.body.contentEditable='false';}},
+        {key:'edit',icon:'✎',name:'Edit page',desc:'Type + colors',
+          on:function(){
+            document.body.contentEditable='true';document.body.style.outline='none';
+            var p=document.getElementById('__pt__');if(p)p.contentEditable='false';
+            var b=el('div','__pt_ed__','position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:2147483640;display:flex;gap:8px;align-items:center;background:#111;border:1px solid #333;border-radius:999px;padding:8px 12px;font:12px system-ui;color:#ddd');
+            b.contentEditable='false';
+            b.innerHTML='Bg <input id="__pt_h__" type="color" value="#ffe566" style="width:26px;height:20px;border:0;background:0;cursor:pointer"> Text <input id="__pt_f__" type="color" value="#6ea8ff" style="width:26px;height:20px;border:0;background:0;cursor:pointer"> Block <input id="__pt_bg__" type="color" value="#1a2450" style="width:26px;height:20px;border:0;background:0;cursor:pointer"> <span style="color:#666;font-size:11px">shift-click fill</span>';
+            document.body.appendChild(b);
+            S.edR=null;
+            S.edSave=function(){var s=window.getSelection();if(s&&s.rangeCount&&!b.contains(s.anchorNode))S.edR=s.getRangeAt(0).cloneRange();};
+            document.addEventListener('mouseup',S.edSave);document.addEventListener('keyup',S.edSave);
+            function paint(cmd,col){var s=window.getSelection();if(S.edR){s.removeAllRanges();s.addRange(S.edR);}document.execCommand('styleWithCSS',false,true);document.execCommand(cmd,false,col);}
+            b.querySelector('#__pt_h__').oninput=function(){paint('hiliteColor',this.value);};
+            b.querySelector('#__pt_f__').oninput=function(){paint('foreColor',this.value);};
+            S.edClick=function(e){if(!e.shiftKey)return;if(e.target.closest&&e.target.closest('#__pt_ed__,#__pt__'))return;e.preventDefault();e.target.style.backgroundColor=document.getElementById('__pt_bg__').value;};
+            document.addEventListener('mousedown',S.edClick,true);
+          },
+          off:function(){document.body.contentEditable='false';document.removeEventListener('mouseup',S.edSave);document.removeEventListener('keyup',S.edSave);document.removeEventListener('mousedown',S.edClick,true);rm('__pt_ed__');}},
         {key:'imgres',icon:'▣',name:'Image size',desc:'Hover any image',
           on:function(){var tip=el('div','__pt_img__','position:fixed;z-index:2147483640;background:#111;color:#fff;padding:5px 10px;font:11px ui-monospace,monospace;border-radius:8px;pointer-events:none;display:none');document.body.appendChild(tip);S.imgF=function(e){if(e.target.tagName==='IMG'){tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px';tip.textContent=e.target.naturalWidth+'×'+e.target.naturalHeight;}else tip.style.display='none';};document.addEventListener('mousemove',S.imgF);},
           off:function(){document.removeEventListener('mousemove',S.imgF);rm('__pt_img__');}},
