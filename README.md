@@ -5,3 +5,4 @@ A full-stack SaaS platform with an AI chatbot powered by Google Gemini, a busine
 ## Project Structure
 - `backend/` — Express.js API server
 - `frontend/` — React (Vite) web app
+- `page-tools/` — Bookmarklet cockpit UI (open `page-tools/index.html`)
