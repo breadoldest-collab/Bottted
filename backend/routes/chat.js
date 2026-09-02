@@ -3,6 +3,22 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Business = require('../models/Business');
 const Conversation = require('../models/Conversation');
+const { isVisitorBlocked } = require('../lib/blockedDomains');
+
+function visitorContext(req, extraPageUrl) {
+  return {
+    pageUrl: extraPageUrl || req.body?.pageUrl || req.query?.pageUrl,
+    referer: req.get('referer') || req.get('referrer'),
+    origin: req.get('origin'),
+  };
+}
+
+function blockedChatResponse() {
+  return {
+    error: 'This support chat is not available on this website.',
+    allowed: false,
+  };
+}
 
 const CANT_ANSWER_PHRASES = [
   "connect you with our team",
@@ -48,10 +64,45 @@ function getSmartFallbackReply(userMessage, business) {
   return `As your AI Assistant for ${business?.businessName || 'CXBot'}, I am happy to help with your inquiry about "${userMessage}". Feel free to ask any question!`;
 }
 
+// GET /api/chat/access — used by the widget before it opens
+router.get('/access', async (req, res) => {
+  try {
+    const { businessId, pageUrl } = req.query;
+    if (!businessId) {
+      return res.status(400).json({ error: 'businessId is required', allowed: false });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(200).json({ allowed: true, blockedDomains: [] });
+    }
+
+    let business = null;
+    try {
+      business = await Business.findById(businessId).select('blockedDomains');
+    } catch (dbErr) {
+      return res.status(200).json({ allowed: true, blockedDomains: [] });
+    }
+
+    const blockedDomains = business?.blockedDomains || [];
+    const blocked = isVisitorBlocked({
+      ...visitorContext(req, pageUrl),
+      blockedDomains,
+    });
+
+    if (blocked) {
+      return res.status(403).json(blockedChatResponse());
+    }
+
+    return res.status(200).json({ allowed: true });
+  } catch (err) {
+    return res.status(200).json({ allowed: true });
+  }
+});
+
 // POST /api/chat/message
 router.post('/message', async (req, res) => {
   try {
-    const { sessionId, userMessage, businessId } = req.body;
+    const { sessionId, userMessage, businessId, pageUrl } = req.body;
 
     if (!sessionId || !userMessage || !businessId) {
       return res.status(400).json({ error: 'sessionId, userMessage, and businessId are required' });
@@ -70,6 +121,13 @@ router.post('/message', async (req, res) => {
       } catch (dbErr) {
         // Skip DB if error
       }
+    }
+
+    if (isVisitorBlocked({
+      ...visitorContext(req, pageUrl),
+      blockedDomains: business?.blockedDomains || [],
+    })) {
+      return res.status(403).json(blockedChatResponse());
     }
 
     const businessName = business?.businessName || 'CXBot Support';
