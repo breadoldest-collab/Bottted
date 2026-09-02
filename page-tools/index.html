@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Tools — ten instruments, one bookmark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #05060b;
+    --ink: #eef1f8;
+    --muted: #8b92a5;
+    --faint: #4a5166;
+    --line: rgba(255,255,255,.08);
+    --glass: rgba(10,12,20,.72);
+    --glass-2: rgba(16,18,28,.88);
+    --accent: #6ea8ff;
+    --accent-2: #8b7bff;
+    --ok: #3ee0a8;
+    --warn: #ffc14a;
+    --radius: 22px;
+    --shadow: 0 40px 120px rgba(0,0,0,.55), 0 0 0 1px var(--line);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { min-height: 100%; }
+
+  body {
+    background: var(--void);
+    color: var(--ink);
+    font-family: Outfit, system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  .grain, .orb, .grid {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+  }
+
+  .grid {
+    background-image:
+      linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 20%, transparent 75%);
+    z-index: 0;
+  }
+
+  .orb {
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 50% 40% at 15% 10%, rgba(110,168,255,.22), transparent 55%),
+      radial-gradient(ellipse 40% 35% at 88% 8%, rgba(139,123,255,.2), transparent 50%),
+      radial-gradient(ellipse 45% 35% at 70% 90%, rgba(62,224,168,.08), transparent 55%);
+    filter: blur(8px);
+  }
+
+  .grain {
+    z-index: 1;
+    opacity: .09;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 2;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 28px 24px 80px;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 56px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: .16em;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #6ea8ff, #8b7bff);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 0 24px rgba(110,168,255,.45);
+  }
+
+  .brand-mark svg { width: 14px; height: 14px; }
+
+  .nav-actions { display: flex; gap: 8px; }
+
+  .ghost-btn, .copy-btn {
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.03);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font: 500 12px/1 Outfit, sans-serif;
+    cursor: pointer;
+    letter-spacing: .04em;
+  }
+
+  .ghost-btn:hover, .copy-btn:hover { background: rgba(255,255,255,.07); }
+
+  .hero {
+    display: grid;
+    grid-template-columns: 1.05fr .95fr;
+    gap: 56px;
+    align-items: start;
+  }
+
+  .kicker {
+    font-size: 11px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: clamp(48px, 6vw, 76px);
+    font-weight: 400;
+    letter-spacing: -.03em;
+    line-height: .95;
+    margin-bottom: 22px;
+  }
+
+  h1 em {
+    font-style: italic;
+    background: linear-gradient(90deg, #c9dcff, #b7a9ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lede {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--muted);
+    max-width: 440px;
+    margin-bottom: 32px;
+  }
+
+  .steps {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .num {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(110,168,255,.08);
+  }
+
+  .step p { font-size: 14px; color: var(--muted); line-height: 1.5; padding-top: 6px; }
+  .step strong { color: var(--ink); font-weight: 600; }
+
+  .kbd {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    border: 1px solid var(--line);
+    background: #12141c;
+    padding: 2px 6px;
+    border-radius: 6px;
+    color: #c9d0e0;
+  }
+
+  .stage {
+    margin-top: 72px;
+    display: grid;
+    grid-template-columns: 1.2fr .8fr;
+    gap: 20px;
+  }
+
+  .card {
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.025);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .player {
+    aspect-ratio: 16/9;
+    background: #08090e;
+    position: relative;
+  }
+
+  .player video, .player canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  .player-meta {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+  }
+
+  .chip {
+    font-size: 11px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: rgba(0,0,0,.55);
+    border: 1px solid rgba(255,255,255,.1);
+    backdrop-filter: blur(8px);
+    color: #d7dce8;
+  }
+
+  .article {
+    padding: 22px;
+  }
+
+  .article h2 {
+    font-family: "Instrument Serif", serif;
+    font-size: 28px;
+    margin: 8px 0 12px;
+  }
+
+  .article p { color: var(--muted); font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+
+  .thumbs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .thumbs img {
+    width: 100%;
+    height: 88px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+  }
+
+  /* Panel */
+  .panel-wrap {
+    position: sticky;
+    top: 24px;
+  }
+
+  .panel {
+    width: 100%;
+    max-width: 400px;
+    margin-left: auto;
+    background: var(--glass);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter: blur(28px) saturate(1.3);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(600px 180px at var(--mx, 80%) var(--my, 0%), rgba(110,168,255,.12), transparent 50%);
+    pointer-events: none;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px 12px;
+    position: relative;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 10px; }
+
+  .pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 0 0 0 rgba(62,224,168,.6);
+    animation: ping 2.2s infinite;
+  }
+
+  @keyframes ping {
+    0% { box-shadow: 0 0 0 0 rgba(62,224,168,.55); }
+    70% { box-shadow: 0 0 0 8px rgba(62,224,168,0); }
+    100% { box-shadow: 0 0 0 0 rgba(62,224,168,0); }
+  }
+
+  .panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #c5cad8;
+  }
+
+  .live {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--faint);
+  }
+
+  .search {
+    margin: 0 16px 12px;
+    position: relative;
+  }
+
+  .search input {
+    width: 100%;
+    background: #0b0d14;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--ink);
+    padding: 10px 12px 10px 36px;
+    font: 400 13px Outfit, sans-serif;
+    outline: none;
+  }
+
+  .search input:focus { border-color: rgba(110,168,255,.5); }
+  .search svg {
+    position: absolute;
+    left: 11px;
+    top: 11px;
+    width: 14px;
+    height: 14px;
+    color: var(--faint);
+  }
+
+  .presets {
+    display: flex;
+    gap: 6px;
+    padding: 0 16px 12px;
+    flex-wrap: wrap;
+  }
+
+  .preset {
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font: 500 11px Outfit, sans-serif;
+    cursor: pointer;
+  }
+
+  .preset:hover, .preset.on {
+    color: var(--ink);
+    border-color: rgba(110,168,255,.4);
+    background: rgba(110,168,255,.1);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 16px 10px;
+  }
+
+  .tab {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    color: var(--faint);
+    font: 600 10px/1 Outfit, sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 8px 0;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+
+  .tab.on { color: var(--ink); border-bottom-color: var(--accent); }
+
+  .tools { padding-bottom: 4px; max-height: none; overflow: visible; }
+
+  .section-label {
+    padding: 8px 18px 2px;
+    font-size: 10px;
+    letter-spacing: .14em;
+    color: var(--faint);
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .tool {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 7px 18px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .tool:hover { background: rgba(255,255,255,.03); }
+  .tool.hidden { display: none; }
+
+  .tool-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+  .ico {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: #12141c;
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    color: #9aa3b8;
+    transition: .2s ease;
+  }
+
+  .ico svg { width: 16px; height: 16px; }
+
+  .tool.active .ico {
+    background: linear-gradient(180deg, rgba(110,168,255,.2), rgba(139,123,255,.08));
+    border-color: rgba(110,168,255,.55);
+    color: var(--accent);
+    box-shadow: 0 0 18px rgba(110,168,255,.2);
+  }
+
+  .tool-name {
+    font-size: 13.5px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tool-desc { font-size: 11px; color: var(--faint); margin-top: 2px; }
+
+  .hotkey {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 9px;
+    color: #5b6378;
+    border: 1px solid #222633;
+    padding: 1px 5px;
+    border-radius: 5px;
+  }
+
+  .wifi {
+    font-size: 9px;
+    color: var(--accent);
+    border: 1px solid rgba(110,168,255,.3);
+    padding: 1px 6px;
+    border-radius: 999px;
+  }
+
+  .toggle {
+    width: 42px;
+    height: 24px;
+    border-radius: 999px;
+    background: #1a1d28;
+    border: 1px solid #2a3040;
+    position: relative;
+    transition: .2s;
+  }
+
+  .toggle i {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #4a5166;
+    transition: transform .22s cubic-bezier(.34,1.56,.64,1), background .2s;
+  }
+
+  .tool.active .toggle {
+    background: linear-gradient(90deg, #4d8dff, #7a6dff);
+    border-color: transparent;
+  }
+
+  .tool.active .toggle i {
+    transform: translateX(18px);
+    background: #fff;
+  }
+
+  .footer {
+    padding: 14px 16px 16px;
+    border-top: 1px solid var(--line);
+    background: rgba(0,0,0,.25);
+  }
+
+  .bm-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #7eb4ff, #4b7dff);
+    color: #081018;
+    font: 650 13px/1 Outfit, sans-serif;
+    text-decoration: none;
+    cursor: grab;
+    box-shadow: 0 10px 30px rgba(75,125,255,.35);
+  }
+
+  .bm-btn:hover { filter: brightness(1.06); }
+  .bm-btn:active { transform: scale(.985); }
+
+  .hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--faint);
+    margin-top: 10px;
+    line-height: 1.55;
+  }
+
+  .hint b { color: var(--muted); font-weight: 500; }
+
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 18px 10px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--faint);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #10131c;
+    border: 1px solid var(--line);
+    color: var(--ok);
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: .25s;
+    z-index: 50;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 960px) {
+    .hero, .stage { grid-template-columns: 1fr; }
+    .panel { margin: 0 auto; }
+    .panel-wrap { position: static; }
+  }
+</style>
+</head>
+<body>
+  <div class="orb"></div>
+  <div class="grid"></div>
+  <div class="grain"></div>
+
+  <div class="wrap">
+    <nav>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#081018" stroke-width="2.4"><path d="M4 8h16M4 12h10M4 16h16"/></svg>
+        </div>
+        Page Tools · v3
+      </div>
+      <div class="nav-actions">
+        <button class="ghost-btn" id="copyJs" type="button">Copy bookmarklet</button>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <p class="kicker">Bookmarklet suite</p>
+        <h1>Ten instruments.<br><em>One bookmark.</em></h1>
+        <p class="lede">A glass cockpit for any tab — resolution, dropped frames, scroll, privacy, and a wifi-safe pre-buffer. Drag it once. Use it everywhere.</p>
+        <div class="steps">
+          <div class="step"><div class="num">01</div><p><strong>Drag</strong> the blue handle onto your bookmarks bar.</p></div>
+          <div class="step"><div class="num">02</div><p><strong>Click it</strong> on any site. The panel floats. Drag the header to park it.</p></div>
+          <div class="step"><div class="num">03</div><p>Toggle tools, or hit <span class="kbd">1</span>–<span class="kbd">0</span>. Presets arm a whole session at once.</p></div>
+        </div>
+      </div>
+
+      <div class="panel-wrap">
+        <div class="panel" id="panel">
+          <div class="panel-header">
+            <div class="header-left">
+              <div class="pulse"></div>
+              <span class="panel-title">Page Tools</span>
+            </div>
+            <span class="live" id="clock">00:00:00</span>
+          </div>
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <input id="q" type="search" placeholder="Filter tools…" autocomplete="off">
+          </div>
+          <div class="presets">
+            <button class="preset" data-preset="cinema" type="button">Cinema</button>
+            <button class="preset" data-preset="reader" type="button">Reader</button>
+            <button class="preset" data-preset="ghost" type="button">Ghost</button>
+            <button class="preset" data-preset="off" type="button">Clear</button>
+          </div>
+          <div class="tabs" id="tabs"></div>
+          <div class="stats">
+            <span id="count">10 tools</span>
+            <span id="armed">0 armed</span>
+          </div>
+          <div class="tools" id="tools"></div>
+          <div class="footer">
+            <a class="bm-btn" id="bookmarklet" href="#">⠿ Drag to bookmarks bar</a>
+            <p class="hint">Clicking the bookmark does <b>not</b> reopen this page. Stay on cinejoy (or any site) and click it — a panel appears on the right.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stage" id="stage">
+      <div class="card">
+        <div class="player">
+          <video id="demoVideo" playsinline muted loop></video>
+          <div class="player-meta">
+            <span class="chip">Demo stream · canvas capture</span>
+            <span class="chip">1920×1080 @ 30</span>
+          </div>
+        </div>
+      </div>
+      <article class="card article">
+        <p class="kicker">Sample page</p>
+        <h2>The quiet craft of watching closely</h2>
+        <p>Toggle tools against this column. Scroll progress paints the top. Hover either still to read native pixels. Blur hides them until you ask.</p>
+        <p>Editable mode lets you rewrite this sentence. Copy-all-links grabs every href on this page, including the bookmarklet itself.</p>
+        <div class="thumbs">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='500'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop stop-color='%231a2450'/%3E%3Cstop offset='1' stop-color='%236ea8ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='500' fill='url(%23g)'/%3E%3Ctext x='40' y='260' fill='white' font-size='42' font-family='sans-serif'%3E800%C3%97500%3C/text%3E%3C/svg%3E" alt="Gradient still 800 by 500" width="400" height="88">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Crect width='1280' height='720' fill='%232a1548'/%3E%3Ccircle cx='640' cy='360' r='180' fill='%238b7bff'/%3E%3Ctext x='48' y='80' fill='white' font-size='40' font-family='sans-serif'%3E1280%C3%97720%3C/text%3E%3C/svg%3E" alt="Violet still 1280 by 720" width="400" height="88">
+        </div>
+        <p style="margin-top:12px"><a href="https://example.com/one" style="color:#8bb4ff">example.com/one</a> · <a href="https://example.com/two" style="color:#8bb4ff">example.com/two</a></p>
+      </article>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (function () {
+    const ICO = {
+      res: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 20h8"/></svg>',
+      fps: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v10H4z"/><path d="M8 4h8M10 12h4"/></svg>',
+      buffer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v10"/><path d="M8 10l4 4 4-4"/><path d="M5 18h14"/></svg>',
+      scroll: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4"/></svg>',
+      timer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 3h6"/></svg>',
+      edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>',
+      imgres: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg>',
+      links: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 007.07 0l1.41-1.41a5 5 0 00-7.07-7.07L10 5.93"/><path d="M14 11a5 5 0 00-7.07 0L5.5 12.41a5 5 0 007.07 7.07L14 18.07"/></svg>',
+      blur: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>',
+      dark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 14.5A8.5 8.5 0 1110 3a7 7 0 0011 11.5z"/></svg>'
+    };
+
+    const S = {};
+    const tools = [
+      { key: 'res', section: 'Video', name: 'Resolution', desc: 'Stats for nerds overlay', k: '1',
+        on() {
+          const v = document.querySelector('video');
+          if (!v) return toast('No video found');
+          rm('__pt_res__');
+          const d = el('div', '__pt_res__', 'position:fixed;top:16px;left:16px;z-index:2147483640;background:rgba(20,20,20,.88);color:#fff;padding:10px 12px;font:12px/1.45 "IBM Plex Mono",ui-monospace,monospace;border-radius:6px;white-space:pre;max-width:min(520px,90vw);pointer-events:none;text-shadow:0 1px 2px #000');
+          parkOverlay(d);
+          S.resOn = true;
+          const tickRes = () => {
+            if (!S.resOn) return;
+            const vid = document.querySelector('video') || v;
+            let box = document.getElementById('__pt_res__');
+            if (!box) {
+              box = el('div', '__pt_res__', d.style.cssText);
+            }
+            parkOverlay(box);
+            box.textContent = nerdStats(vid);
+          };
+          tickRes();
+          S.resI = setInterval(tickRes, 400);
+        },
+        off() {
+          S.resOn = false;
+          clearInterval(S.resI);
+          rm('__pt_res__');
+        }
+      },
+      { key: 'fps', section: 'Video', name: 'FPS + dropped frames', desc: 'Playback quality stats', k: '2',
+        on() {
+          const v = document.querySelector('video');
+          if (!v) return toast('No video found');
+          rm('__pt_fps__');
+          const d = el('div', '__pt_fps__', 'position:fixed;top:108px;left:24px;background:rgba(6,8,14,.82);color:#8ec8ff;padding:7px 12px;z-index:2147483640;font:600 12px/1 "IBM Plex Mono",monospace;border-radius:10px;pointer-events:none;border:1px solid rgba(142,200,255,.2);backdrop-filter:blur(10px)');
+          document.body.appendChild(d);
+          S.fpsOn = true;
+          S.fpsI = setInterval(() => {
+            if (!S.fpsOn) return;
+            const vid = document.querySelector('video') || v;
+            const box = document.getElementById('__pt_fps__');
+            if (!box) return;
+            const q = vid.getVideoPlaybackQuality && vid.getVideoPlaybackQuality();
+            box.textContent = q ? ('Drop ' + q.droppedVideoFrames + '/' + q.totalVideoFrames) : 'No quality data';
+          }, 400);
+        },
+        off() { S.fpsOn = false; clearInterval(S.fpsI); rm('__pt_fps__'); }
+      },
+      { key: 'buffer', section: 'Video', name: 'Pre-buffer whole video', desc: 'Load the file before you go offline', k: '3', badge: 'wifi-safe',
+        on() {
+          const v = document.querySelector('video');
+          if (!v) return toast('No video found');
+          const d = el('div', '__pt_buf__', 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(6,8,14,.9);color:#fff;padding:10px 18px;z-index:2147483640;font:13px Outfit,system-ui;border-radius:999px;pointer-events:none;border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(12px);white-space:nowrap');
+          d.textContent = 'Buffering…';
+          document.body.appendChild(d);
+          const dur = v.duration;
+          if (!dur || !isFinite(dur)) { d.textContent = 'Duration unknown — live streams skip this'; setTimeout(() => d.remove(), 2800); return; }
+          v.preload = 'auto';
+          const saved = v.currentTime, paused = v.paused, orig = v.playbackRate;
+          let t = 0;
+          const step = Math.max(8, dur / 20);
+          function seek() {
+            const buf = v.buffered;
+            const got = buf.length ? Math.round((buf.end(buf.length - 1) / dur) * 100) : 0;
+            if (t >= dur) {
+              v.currentTime = saved;
+              if (paused) v.pause();
+              v.playbackRate = orig;
+              d.textContent = 'Buffered ' + got + '%';
+              setTimeout(() => d.remove(), 2800);
+              return;
+            }
+            d.textContent = 'Buffering ' + got + '%';
+            v.currentTime = Math.min(t, dur - 0.1);
+            t += step;
+            S.bufT = setTimeout(seek, 280);
+          }
+          v.muted = true;
+          seek();
+        },
+        off() { clearTimeout(S.bufT); rm('__pt_buf__'); }
+      },
+      { key: 'scroll', section: 'Page', name: 'Scroll progress', desc: 'Hairline at the top of the page', k: '4',
+        on() {
+          const b = el('div', '__pt_scr__', 'position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#6ea8ff,#8b7bff);z-index:2147483640;width:0;pointer-events:none');
+          document.body.appendChild(b);
+          S.scrF = function () {
+            const s = document.documentElement;
+            const max = s.scrollHeight - s.clientHeight;
+            b.style.width = Math.min(100, Math.max(0, max <= 0 ? 0 : (s.scrollTop / max) * 100)) + '%';
+          };
+          window.addEventListener('scroll', S.scrF, { passive: true });
+          S.scrF();
+        },
+        off() { window.removeEventListener('scroll', S.scrF); rm('__pt_scr__'); }
+      },
+      { key: 'timer', section: 'Page', name: 'Tab timer', desc: 'How long this page has been open', k: '5',
+        on() {
+          const start = Date.now();
+          const d = el('div', '__pt_tmr__', 'position:fixed;bottom:16px;right:16px;background:rgba(6,8,14,.82);color:#c5cad8;padding:7px 12px;z-index:2147483640;font:12px/1 "IBM Plex Mono",monospace;border-radius:10px;pointer-events:none;border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)');
+          document.body.appendChild(d);
+          S.tmrI = setInterval(() => {
+            const s = Math.floor((Date.now() - start) / 1000);
+            d.textContent = Math.floor(s / 60) + 'm ' + String(s % 60).padStart(2, '0') + 's';
+          }, 1000);
+        },
+        off() { clearInterval(S.tmrI); rm('__pt_tmr__'); }
+      },
+      { key: 'edit', section: 'Page', name: 'Editable page', desc: 'Type, highlight, fill blocks', k: '6',
+        on() {
+          document.body.contentEditable = 'true';
+          document.body.style.outline = 'none';
+          const cockpit = document.getElementById('panel');
+          if (cockpit) cockpit.contentEditable = 'false';
+          rm('__pt_ed__');
+          const bar = el('div', '__pt_ed__', 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:2147483640;display:flex;gap:12px;align-items:center;background:rgba(10,12,20,.94);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:8px 16px;font:12px Outfit,system-ui;color:#c5cad8;box-shadow:0 16px 40px rgba(0,0,0,.45);white-space:nowrap');
+          bar.contentEditable = 'false';
+          bar.innerHTML = 'Select text'
+            + '<label style="display:flex;align-items:center;gap:6px">Bg <input id="__pt_h__" type="color" value="#ffe566" style="width:28px;height:22px;border:0;background:none;cursor:pointer"></label>'
+            + '<label style="display:flex;align-items:center;gap:6px">Text <input id="__pt_f__" type="color" value="#6ea8ff" style="width:28px;height:22px;border:0;background:none;cursor:pointer"></label>'
+            + '<label style="display:flex;align-items:center;gap:6px">Block <input id="__pt_bg__" type="color" value="#1a2450" style="width:28px;height:22px;border:0;background:none;cursor:pointer"></label>'
+            + '<span style="font-size:11px;color:#4a5166">Shift-click a block to fill</span>';
+          document.body.appendChild(bar);
+          S.edRange = null;
+          S.edSave = function () {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount && !bar.contains(sel.anchorNode)) S.edRange = sel.getRangeAt(0).cloneRange();
+          };
+          document.addEventListener('mouseup', S.edSave);
+          document.addEventListener('keyup', S.edSave);
+          function paint(cmd, col) {
+            const sel = window.getSelection();
+            if (S.edRange) { sel.removeAllRanges(); sel.addRange(S.edRange); }
+            document.execCommand('styleWithCSS', false, true);
+            document.execCommand(cmd, false, col);
+          }
+          bar.querySelector('#__pt_h__').addEventListener('input', e => paint('hiliteColor', e.target.value));
+          bar.querySelector('#__pt_f__').addEventListener('input', e => paint('foreColor', e.target.value));
+          S.edClick = function (e) {
+            if (!e.shiftKey) return;
+            if (e.target.closest('#__pt_ed__,#panel,#__pt__')) return;
+            e.preventDefault();
+            e.target.style.backgroundColor = document.getElementById('__pt_bg__').value;
+          };
+          document.addEventListener('mousedown', S.edClick, true);
+        },
+        off() {
+          document.body.contentEditable = 'false';
+          document.removeEventListener('mouseup', S.edSave);
+          document.removeEventListener('keyup', S.edSave);
+          document.removeEventListener('mousedown', S.edClick, true);
+          rm('__pt_ed__');
+        }
+      },
+      { key: 'imgres', section: 'Inspect', name: 'Image size on hover', desc: 'Natural resolution of any image', k: '7',
+        on() {
+          const tip = el('div', '__pt_img__', 'position:fixed;background:rgba(6,8,14,.86);color:#fff;padding:5px 10px;z-index:2147483640;font:11px/1 "IBM Plex Mono",monospace;border-radius:8px;pointer-events:none;display:none;border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px)');
+          document.body.appendChild(tip);
+          S.imgF = function (e) {
+            if (e.target.tagName === 'IMG') {
+              tip.style.display = 'block';
+              tip.style.left = (e.clientX + 14) + 'px';
+              tip.style.top = (e.clientY + 14) + 'px';
+              tip.textContent = e.target.naturalWidth + '×' + e.target.naturalHeight;
+            } else tip.style.display = 'none';
+          };
+          document.addEventListener('mousemove', S.imgF);
+        },
+        off() { document.removeEventListener('mousemove', S.imgF); rm('__pt_img__'); }
+      },
+      { key: 'links', section: 'Inspect', name: 'Copy all links', desc: 'Every href, onto the clipboard', k: '8',
+        on() {
+          const a = [...document.querySelectorAll('a[href]')].map(x => x.href).filter(Boolean).join('\n');
+          const n = a ? a.split('\n').length : 0;
+          const done = () => toast('Copied ' + n + ' links');
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(a).then(done).catch(done);
+          else done();
+          setTimeout(() => setTool('links', false), 400);
+        },
+        off() {}
+      },
+      { key: 'blur', section: 'Privacy', name: 'Blur all images', desc: 'Hover to reveal one at a time', k: '9',
+        on() {
+          const s = document.createElement('style');
+          s.id = '__pt_blur__';
+          s.textContent = 'img{filter:blur(16px)!important;transition:filter .2s}img:hover{filter:blur(0)!important}';
+          document.head.appendChild(s);
+        },
+        off() { rm('__pt_blur__'); }
+      },
+      { key: 'dark', section: 'Privacy', name: 'Force dark mode', desc: 'Invert + hue-rotate any site', k: '0',
+        on() {
+          const s = document.createElement('style');
+          s.id = '__pt_drk__';
+          s.textContent = 'html{filter:invert(1) hue-rotate(180deg)!important}img,video,canvas,picture{filter:invert(1) hue-rotate(180deg)!important}';
+          document.head.appendChild(s);
+        },
+        off() { rm('__pt_drk__'); }
+      }
+    ];
+
+    const sections = ['All', 'Video', 'Page', 'Inspect', 'Privacy'];
+    const presets = {
+      cinema: ['res', 'fps'],
+      reader: ['scroll', 'timer'],
+      ghost: ['blur', 'dark']
+    };
+
+    const state = {};
+    let filter = '';
+    let tab = 'All';
+
+    function el(tag, id, style) {
+      const n = document.createElement(tag);
+      n.id = id;
+      n.className = '__ptx';
+      n.style.cssText = style;
+      return n;
+    }
+    function rm(id) {
+      document.querySelectorAll('[id="' + id + '"]').forEach(e => e.remove());
+    }
+    function nerdStats(v) {
+      const p = document.getElementById('movie_player') || document.querySelector('.html5-video-player');
+      try {
+        const yt = p && p.getStatsForNerds && p.getStatsForNerds();
+        if (yt && typeof yt === 'object') {
+          const lines = Object.keys(yt).map(k => {
+            const val = yt[k];
+            if (val == null || val === '') return '';
+            const pretty = k.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^\s*\w/, c => c.toUpperCase());
+            return pretty + ': ' + val;
+          }).filter(Boolean);
+          if (lines.length) return lines.join('\n');
+        }
+      } catch (e) {}
+      const q = v.getVideoPlaybackQuality && v.getVideoPlaybackQuality();
+      const r = v.getBoundingClientRect();
+      const buf = v.buffered;
+      let health = 0;
+      if (buf && buf.length) health = Math.max(0, buf.end(buf.length - 1) - v.currentTime);
+      const id = new URLSearchParams(location.search).get('v')
+        || (location.pathname.match(/\/(?:shorts|embed|video)\/([^/?]+)/) || [])[1]
+        || '—';
+      const kbps = navigator.connection && navigator.connection.downlink
+        ? Math.round(navigator.connection.downlink * 1000) + ' Kbps est.'
+        : '—';
+      return [
+        'Video ID: ' + id,
+        'Viewport / Frames: ' + Math.round(r.width) + '×' + Math.round(r.height) + (q ? ' / ' + q.droppedVideoFrames + ' dropped of ' + q.totalVideoFrames : ''),
+        'Current / Optimal Res: ' + (v.videoWidth || 0) + '×' + (v.videoHeight || 0),
+        'Volume: ' + Math.round((v.muted ? 0 : v.volume) * 100) + '%',
+        'Buffer Health: ' + health.toFixed(2) + ' s',
+        'Connection Speed: ' + kbps
+      ].join('\n');
+    }
+    function overlayHost() {
+      const fs = document.fullscreenElement || document.webkitFullscreenElement;
+      if (!fs) return document.body;
+      if (fs.tagName === 'VIDEO') return fs.parentElement || fs;
+      return fs;
+    }
+    function parkOverlay(node) {
+      if (!node) return;
+      const h = overlayHost();
+      if (node.parentNode !== h) h.appendChild(node);
+    }
+    document.addEventListener('fullscreenchange', () => {
+      parkOverlay(document.getElementById('__pt_res__'));
+      parkOverlay(document.getElementById('__pt_fps__'));
+    });
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(S.toastT);
+      S.toastT = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    function setTool(key, on) {
+      const t = tools.find(x => x.key === key);
+      if (!t) return;
+      try { t.off(); } catch (e) {}
+      state[key] = !!on;
+      if (on) {
+        try { t.on(); } catch (e) { console.warn(e); }
+      }
+      renderTools();
+    }
+
+    function renderTabs() {
+      const host = document.getElementById('tabs');
+      host.innerHTML = sections.map(s => '<button class="tab' + (tab === s ? ' on' : '') + '" data-tab="' + s + '" type="button">' + s + '</button>').join('');
+      host.querySelectorAll('.tab').forEach(b => b.onclick = () => { tab = b.dataset.tab; renderTools(); renderTabs(); });
+    }
+
+    function renderTools() {
+      const q = filter.trim().toLowerCase();
+      const host = document.getElementById('tools');
+      const vis = tools.filter(t => (tab === 'All' || t.section === tab) && (!q || (t.name + t.desc).toLowerCase().includes(q)));
+      let html = '';
+      let last = '';
+      vis.forEach(t => {
+        if (tab === 'All' && t.section !== last) {
+          html += '<div class="section-label">' + t.section + '</div>';
+          last = t.section;
+        }
+        html += '<div class="tool' + (state[t.key] ? ' active' : '') + '" data-key="' + t.key + '" role="switch" aria-checked="' + !!state[t.key] + '">'
+          + '<div class="tool-left"><div class="ico">' + ICO[t.key] + '</div><div>'
+          + '<div class="tool-name">' + t.name + (t.badge ? ' <span class="wifi">' + t.badge + '</span>' : '') + ' <span class="hotkey">' + t.k + '</span></div>'
+          + '<div class="tool-desc">' + t.desc + '</div></div></div>'
+          + '<div class="toggle"><i></i></div></div>';
+      });
+      host.innerHTML = html || '<p class="section-label">No tools match</p>';
+      host.querySelectorAll('.tool').forEach(row => {
+        row.onclick = () => setTool(row.dataset.key, !state[row.dataset.key]);
+      });
+      const armed = Object.values(state).filter(Boolean).length;
+      document.getElementById('armed').textContent = armed + ' armed';
+      document.getElementById('count').textContent = vis.length + ' shown';
+    }
+
+    document.getElementById('q').addEventListener('input', e => { filter = e.target.value; renderTools(); });
+    const presetTab = { cinema: 'Video', reader: 'Page', ghost: 'Privacy' };
+    document.querySelectorAll('.preset').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.preset;
+        tools.forEach(t => { if (state[t.key]) setTool(t.key, false); });
+        if (id !== 'off') (presets[id] || []).forEach(k => setTool(k, true));
+        tab = id === 'off' ? 'All' : (presetTab[id] || 'All');
+        document.querySelectorAll('.preset').forEach(p => p.classList.toggle('on', p.dataset.preset === id && id !== 'off'));
+        renderTabs();
+        renderTools();
+      };
+    });
+
+    window.addEventListener('keydown', e => {
+      if (e.target.matches('input,textarea,[contenteditable=true]')) return;
+      if (e.key === '/') { e.preventDefault(); document.getElementById('q').focus(); return; }
+      const t = tools.find(x => x.k === e.key);
+      if (t) setTool(t.key, !state[t.key]);
+    });
+
+    const panel = document.getElementById('panel');
+    panel.addEventListener('pointermove', e => {
+      const r = panel.getBoundingClientRect();
+      panel.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      panel.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+
+    function tick() {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    function startDemoVideo() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1920;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+      let f = 0;
+      (function draw() {
+        f++;
+        const g = ctx.createLinearGradient(0, 0, 1920, 1080);
+        g.addColorStop(0, '#0b1020');
+        g.addColorStop(.5, '#1a2450');
+        g.addColorStop(1, '#2a1548');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 1920, 1080);
+        ctx.strokeStyle = 'rgba(110,168,255,.25)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 18; i++) {
+          ctx.beginPath();
+          ctx.arc(960, 540, 40 + i * 48 + (Math.sin(f / 20 + i) * 12), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#e8eeff';
+        ctx.font = '600 64px Outfit, sans-serif';
+        ctx.fillText('PAGE TOOLS  ·  LIVE', 120, 200);
+        ctx.fillStyle = '#8b92a5';
+        ctx.font = '28px IBM Plex Mono, monospace';
+        ctx.fillText('1920 × 1080   frame ' + f, 120, 250);
+        requestAnimationFrame(draw);
+      })();
+      const video = document.getElementById('demoVideo');
+      video.srcObject = canvas.captureStream(30);
+      video.play().catch(() => {});
+    }
+
+    /* Bookmarklet: compact; overlays on body so YouTube can't eat them */
+    const bookmarkletSrc = `(function(){
+      try{
+      function fsHost(){var fs=document.fullscreenElement||document.webkitFullscreenElement;if(!fs)return document.body;if(fs.tagName==='VIDEO')return fs.parentElement||document.body;return fs;}
+      var existing=window.__ptPanel;
+      if(existing&&existing.isConnected){
+        if(existing.style.display==='none'){existing.style.display='block';existing.style.zIndex='2147483647';fsHost().appendChild(existing);}
+        else existing.style.display='none';
+        return;
+      }
+      if(window.__ptKill){try{window.__ptKill();}catch(e){}}
+      function mk(tag,css,txt){var n=document.createElement(tag);if(css)n.style.cssText=css;if(txt!=null)n.textContent=txt;return n;}
+      var S={},state={};
+      function el(t,id,s){var n=document.createElement(t);n.id=id;n.className='__ptx';n.style.cssText=s;return n;}
+      function rm(id){var n=document.querySelectorAll('[id="'+id+'"]');for(var i=n.length-1;i>=0;i--)n[i].remove();}
+      function host(){var fs=document.fullscreenElement||document.webkitFullscreenElement;if(!fs)return document.body;if(fs.tagName==='VIDEO')return fs.parentElement||fs;return fs;}
+      function park(n){if(!n)return;var h=host();if(n.parentNode!==h)h.appendChild(n);n.style.position='fixed';n.style.zIndex='2147483640';}
+      function parkAll(){['__pt_res__','__pt_fps__','__pt_tmr__','__pt_scr__','__pt_ed__','__pt_buf__','__pt__'].forEach(function(id){var n=document.getElementById(id);if(n&&(id!=='__pt__'||n.style.display!=='none'))park(n);});}
+      function onFs(){var fs=document.fullscreenElement||document.webkitFullscreenElement;if(fs&&fs.tagName==='VIDEO'&&(S.resOn||S.fpsOn)&&fs.parentElement&&!S._fsFix){S._fsFix=1;var wrap=fs.parentElement;function go(){if(wrap.requestFullscreen)wrap.requestFullscreen().catch(function(){});else if(wrap.webkitRequestFullscreen)wrap.webkitRequestFullscreen();setTimeout(function(){S._fsFix=0;parkAll();},80);}if(document.exitFullscreen)document.exitFullscreen().then(go).catch(go);else go();return;}parkAll();}
+      document.addEventListener('fullscreenchange',onFs);
+      document.addEventListener('webkitfullscreenchange',onFs);
+      function nerd(v){
+        var p=document.getElementById('movie_player')||document.querySelector('.html5-video-player');
+        try{var yt=p&&p.getStatsForNerds&&p.getStatsForNerds();
+          if(yt&&typeof yt==='object'){var L=[],k;for(k in yt){if(yt[k]==null||yt[k]==='')continue;L.push(k.replace(/_/g,' ')+': '+yt[k]);}if(L.length)return L.join('\\n');}
+        }catch(e){}
+        var q=v.getVideoPlaybackQuality&&v.getVideoPlaybackQuality();
+        var r=v.getBoundingClientRect();
+        var buf=v.buffered,h=0;if(buf&&buf.length)h=Math.max(0,buf.end(buf.length-1)-v.currentTime);
+        var id=(location.search.match(/[?&]v=([^&]+)/)||[])[1]||'—';
+        var kb=navigator.connection&&navigator.connection.downlink?Math.round(navigator.connection.downlink*1000)+' Kbps est.':'—';
+        return 'Video ID: '+id+'\\nViewport / Frames: '+Math.round(r.width)+'×'+Math.round(r.height)+(q?' / '+q.droppedVideoFrames+' dropped of '+q.totalVideoFrames:'')+'\\nCurrent / Optimal Res: '+(v.videoWidth||0)+'×'+(v.videoHeight||0)+'\\nVolume: '+Math.round((v.muted?0:v.volume)*100)+'%\\nBuffer Health: '+h.toFixed(2)+' s\\nConnection Speed: '+kb;
+      }
+      function wipe(){
+        S.resOn=S.fpsOn=false;
+        clearInterval(S.resI);clearInterval(S.fpsI);clearInterval(S.tmrI);clearTimeout(S.bufT);
+        if(S.scrF)window.removeEventListener('scroll',S.scrF);
+        if(S.imgF)document.removeEventListener('mousemove',S.imgF);
+        if(S.edSave){document.removeEventListener('mouseup',S.edSave);document.removeEventListener('keyup',S.edSave);}
+        if(S.edClick)document.removeEventListener('mousedown',S.edClick,true);
+        document.body.contentEditable='false';
+        var n=document.querySelectorAll('.__ptx,[id^="__pt_"]');
+        for(var i=n.length-1;i>=0;i--)n[i].remove();
+        for(var k in state)state[k]=false;
+        window.__ptKill=null;
+        document.removeEventListener('fullscreenchange',onFs);
+        document.removeEventListener('webkitfullscreenchange',onFs);
+        window.__ptPanel=null;
+      }
+      window.__ptKill=wipe;
+      var tools=[
+        {key:'res',icon:'▣',name:'Resolution',desc:'Stats for nerds',
+          on:function(){var v=document.querySelector('video');if(!v)return alert('No video found');rm('__pt_res__');var d=el('div','__pt_res__','position:fixed;top:16px;left:16px;z-index:2147483640;background:rgba(20,20,20,.88);color:#fff;padding:10px 12px;font:12px/1.45 ui-monospace,monospace;border-radius:6px;white-space:pre;max-width:min(520px,90vw);pointer-events:none');park(d);S.resOn=true;function tick(){if(!S.resOn)return;var vid=document.querySelector('video')||v;var box=document.getElementById('__pt_res__');if(!box){box=el('div','__pt_res__',d.style.cssText);}park(box);box.textContent=nerd(vid);}tick();S.resI=setInterval(tick,400);},
+          off:function(){S.resOn=false;clearInterval(S.resI);rm('__pt_res__');}},
+        {key:'fps',icon:'▷',name:'FPS + drops',desc:'Playback stats',
+          on:function(){var v=document.querySelector('video');if(!v)return alert('No video found');rm('__pt_fps__');var d=el('div','__pt_fps__','position:fixed;top:16px;right:16px;z-index:2147483640;background:rgba(6,8,14,.9);color:#8ec8ff;padding:7px 12px;font:600 12px ui-monospace,monospace;border-radius:10px;pointer-events:none');park(d);S.fpsOn=true;S.fpsI=setInterval(function(){if(!S.fpsOn)return;var vid=document.querySelector('video')||v;var box=document.getElementById('__pt_fps__');if(!box)return;park(box);var q=vid.getVideoPlaybackQuality&&vid.getVideoPlaybackQuality();box.textContent=q?'Drop '+q.droppedVideoFrames+'/'+q.totalVideoFrames:'No data';},400);},
+          off:function(){S.fpsOn=false;clearInterval(S.fpsI);rm('__pt_fps__');}},
+        {key:'buffer',icon:'↓',name:'Pre-buffer',desc:'Wifi-safe load',
+          on:function(){var v=document.querySelector('video');if(!v)return alert('No video found');var d=el('div','__pt_buf__','position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:2147483640;background:#111;color:#fff;padding:10px 18px;font:13px system-ui;border-radius:999px;white-space:nowrap');d.textContent='Buffering…';document.body.appendChild(d);var dur=v.duration;if(!dur||!isFinite(dur)){d.textContent='Duration unknown';setTimeout(function(){d.remove();},2500);return;}v.preload='auto';var saved=v.currentTime,paused=v.paused,orig=v.playbackRate,t=0,step=Math.max(8,dur/20);function seek(){var buf=v.buffered,got=buf.length?Math.round((buf.end(buf.length-1)/dur)*100):0;if(t>=dur){v.currentTime=saved;if(paused)v.pause();v.playbackRate=orig;d.textContent='Buffered '+got+'%';setTimeout(function(){d.remove();},2500);return;}d.textContent='Buffering '+got+'%';v.currentTime=Math.min(t,dur-0.1);t+=step;S.bufT=setTimeout(seek,280);}v.muted=true;seek();},
+          off:function(){clearTimeout(S.bufT);rm('__pt_buf__');}},
+        {key:'scroll',icon:'↕',name:'Scroll',desc:'Progress bar',
+          on:function(){var b=el('div','__pt_scr__','position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#6ea8ff,#8b7bff);z-index:2147483640;width:0;pointer-events:none');document.body.appendChild(b);S.scrF=function(){var s=document.documentElement,m=s.scrollHeight-s.clientHeight;b.style.width=(m<=0?0:Math.min(100,s.scrollTop/m*100))+'%';};window.addEventListener('scroll',S.scrF);S.scrF();},
+          off:function(){window.removeEventListener('scroll',S.scrF);rm('__pt_scr__');}},
+        {key:'timer',icon:'◷',name:'Tab timer',desc:'Time on page',
+          on:function(){var start=Date.now(),d=el('div','__pt_tmr__','position:fixed;bottom:16px;right:16px;z-index:2147483640;background:rgba(6,8,14,.9);color:#ccc;padding:7px 12px;font:12px ui-monospace,monospace;border-radius:10px');document.body.appendChild(d);S.tmrI=setInterval(function(){var s=Math.floor((Date.now()-start)/1000);d.textContent=Math.floor(s/60)+'m '+String(s%60).padStart(2,'0')+'s';},1000);},
+          off:function(){clearInterval(S.tmrI);rm('__pt_tmr__');}},
+        {key:'edit',icon:'✎',name:'Edit page',desc:'Type + colors',
+          on:function(){
+            document.body.contentEditable='true';document.body.style.outline='none';
+            var p=document.getElementById('__pt__');if(p)p.contentEditable='false';
+            var b=el('div','__pt_ed__','position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:2147483640;display:flex;gap:8px;align-items:center;background:#111;border:1px solid #333;border-radius:999px;padding:8px 12px;font:12px system-ui;color:#ddd');
+            b.contentEditable='false';
+            function colorIn(id,val){var i=document.createElement('input');i.type='color';i.id=id;i.value=val;i.style.cssText='width:26px;height:20px;border:0;background:transparent;cursor:pointer';return i;}
+            b.appendChild(document.createTextNode('Bg '));b.appendChild(colorIn('__pt_h__','#ffe566'));
+            b.appendChild(document.createTextNode(' Text '));b.appendChild(colorIn('__pt_f__','#6ea8ff'));
+            b.appendChild(document.createTextNode(' Block '));b.appendChild(colorIn('__pt_bg__','#1a2450'));
+            b.appendChild(mk('span','color:#666;font-size:11px',' shift-click fill'));
+            document.body.appendChild(b);
+            S.edR=null;
+            S.edSave=function(){var s=window.getSelection();if(s&&s.rangeCount&&!b.contains(s.anchorNode))S.edR=s.getRangeAt(0).cloneRange();};
+            document.addEventListener('mouseup',S.edSave);document.addEventListener('keyup',S.edSave);
+            function paint(cmd,col){var s=window.getSelection();if(S.edR){s.removeAllRanges();s.addRange(S.edR);}document.execCommand('styleWithCSS',false,true);document.execCommand(cmd,false,col);}
+            b.querySelector('#__pt_h__').oninput=function(){paint('hiliteColor',this.value);};
+            b.querySelector('#__pt_f__').oninput=function(){paint('foreColor',this.value);};
+            S.edClick=function(e){if(!e.shiftKey)return;if(e.target.closest&&e.target.closest('#__pt_ed__,#__pt__'))return;e.preventDefault();e.target.style.backgroundColor=document.getElementById('__pt_bg__').value;};
+            document.addEventListener('mousedown',S.edClick,true);
+          },
+          off:function(){document.body.contentEditable='false';document.removeEventListener('mouseup',S.edSave);document.removeEventListener('keyup',S.edSave);document.removeEventListener('mousedown',S.edClick,true);rm('__pt_ed__');}},
+        {key:'imgres',icon:'▣',name:'Image size',desc:'Hover any image',
+          on:function(){var tip=el('div','__pt_img__','position:fixed;z-index:2147483640;background:#111;color:#fff;padding:5px 10px;font:11px ui-monospace,monospace;border-radius:8px;pointer-events:none;display:none');document.body.appendChild(tip);S.imgF=function(e){if(e.target.tagName==='IMG'){tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px';tip.textContent=e.target.naturalWidth+'×'+e.target.naturalHeight;}else tip.style.display='none';};document.addEventListener('mousemove',S.imgF);},
+          off:function(){document.removeEventListener('mousemove',S.imgF);rm('__pt_img__');}},
+        {key:'links',icon:'∞',name:'Copy links',desc:'All hrefs',
+          on:function(){var a=[].slice.call(document.querySelectorAll('a[href]')).map(function(x){return x.href;}).filter(Boolean).join('\\n');var n=a?a.split('\\n').length:0;navigator.clipboard&&navigator.clipboard.writeText(a);alert('Copied '+n+' links');},
+          off:function(){}},
+        {key:'blur',icon:'◌',name:'Blur images',desc:'Hover to reveal',
+          on:function(){var s=document.createElement('style');s.id='__pt_blur__';s.className='__ptx';s.textContent='img{filter:blur(16px)!important}img:hover{filter:none!important}';document.head.appendChild(s);},
+          off:function(){rm('__pt_blur__');}},
+        {key:'dark',icon:'☾',name:'Dark mode',desc:'Force invert',
+          on:function(){var s=document.createElement('style');s.id='__pt_drk__';s.className='__ptx';s.textContent='html{filter:invert(1) hue-rotate(180deg)!important}img,video,canvas,picture{filter:invert(1) hue-rotate(180deg)!important}';document.head.appendChild(s);},
+          off:function(){rm('__pt_drk__');}}
+      ];
+      var panel=el('div','__pt__','position:fixed;top:48px;right:16px;width:300px;z-index:2147483647;background:rgba(10,12,20,.92);border:1px solid rgba(255,255,255,.1);border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.6);font-family:system-ui,sans-serif;color:#eef1f8;overflow:hidden;user-select:none');
+      var hdr=el('div','','padding:12px 14px;display:flex;justify-content:space-between;align-items:center;cursor:move;border-bottom:1px solid rgba(255,255,255,.08)');
+      hdr.removeAttribute('id');hdr.className='';
+      var leftH=mk('div','display:flex;align-items:center;gap:8px');
+      leftH.appendChild(mk('div','width:8px;height:8px;border-radius:50%;background:#3ee0a8'));
+      leftH.appendChild(mk('span','font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c5cad8','Page Tools'));
+      var xbtn=mk('span','cursor:pointer;font-size:18px;color:#555','×');xbtn.id='__pt_x__';
+      hdr.appendChild(leftH);hdr.appendChild(xbtn);
+      panel.appendChild(hdr);
+      var sections={Video:['res','fps','buffer'],Page:['scroll','timer','edit'],Inspect:['imgres','links'],Privacy:['blur','dark']};
+      function setOff(key){var t=tools.filter(function(x){return x.key===key;})[0];try{t.off();}catch(e){}state[key]=false;}
+      Object.keys(sections).forEach(function(sec){
+        var lbl=document.createElement('div');
+        lbl.style.cssText='padding:10px 14px 4px;font-size:9px;letter-spacing:.14em;color:#4a5166;text-transform:uppercase;font-weight:700';
+        lbl.textContent=sec;panel.appendChild(lbl);
+        sections[sec].forEach(function(key){
+          var t=tools.filter(function(x){return x.key===key;})[0];
+          var row=document.createElement('div');
+          row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 14px';
+          row.onmouseenter=function(){row.style.background='rgba(255,255,255,.04)';};
+          row.onmouseleave=function(){row.style.background='';};
+          var left=mk('div','display:flex;gap:10px;align-items:center');
+          var ico=mk('div','width:30px;height:30px;border-radius:9px;background:#12141c;border:1px solid #222;display:flex;align-items:center;justify-content:center;font-size:13px',t.icon);
+          ico.id='__ico_'+key+'__';
+          var info=mk('div');
+          info.appendChild(mk('div','font-size:12.5px;font-weight:500',t.name));
+          info.appendChild(mk('div','font-size:10px;color:#4a5166',t.desc));
+          left.appendChild(ico);left.appendChild(info);
+          var tog=mk('div','width:38px;height:22px;background:#1a1d28;border-radius:999px;position:relative;cursor:pointer;border:1px solid #2a3040');
+          tog.id='__tog_'+key+'__';
+          var thm=mk('div','position:absolute;top:3px;left:3px;width:14px;height:14px;background:#555;border-radius:50%;transition:transform .2s');
+          thm.id='__thm_'+key+'__';
+          tog.appendChild(thm);
+          row.appendChild(left);row.appendChild(tog);
+          tog.onclick=function(){
+            if(state[key]){setOff(key);tog.style.background='#1a1d28';tog.style.border='1px solid #2a3040';thm.style.transform='';thm.style.background='#555';ico.style.borderColor='#222';}
+            else{try{t.off();}catch(e){}state[key]=true;t.on();tog.style.background='linear-gradient(90deg,#4d8dff,#7a6dff)';tog.style.border='0';thm.style.transform='translateX(16px)';thm.style.background='#fff';ico.style.borderColor='#6ea8ff';}
+          };
+          panel.appendChild(row);
+        });
+      });
+      fsHost().appendChild(panel);
+      window.__ptPanel=panel;
+      document.getElementById('__pt_x__').onclick=function(){panel.style.display='none';};
+      var ox,oy,drag=false;
+      hdr.onmousedown=function(e){if(e.target.id==='__pt_x__')return;drag=true;ox=e.clientX-panel.offsetLeft;oy=e.clientY-panel.offsetTop;panel.style.right='auto';};
+      document.onmousemove=function(e){if(drag){panel.style.left=(e.clientX-ox)+'px';panel.style.top=(e.clientY-oy)+'px';}};
+      document.onmouseup=function(){drag=false;};
+      }catch(err){alert('Page Tools failed: '+err);}
+    })();`;
+    const href = 'javascript:' + encodeURIComponent(bookmarkletSrc);
+    document.getElementById('bookmarklet').href = href;
+    document.getElementById('copyJs').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(href);
+        toast('Bookmarklet copied');
+      } catch {
+        toast('Copy failed — drag the blue handle instead');
+      }
+    };
+
+    renderTabs();
+    renderTools();
+    startDemoVideo();
+  })();
+  </script>
+</body>
+</html>
