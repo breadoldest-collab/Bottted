@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import API from '../api/axios';
-import { FileText, HelpCircle, Plus, Trash2, Save, CheckCircle2 } from 'lucide-react';
+import { FileText, HelpCircle, Plus, Trash2, Save, CheckCircle2, Globe, Ban } from 'lucide-react';
 
 const MAX_DESC = 500;
 
@@ -10,6 +10,8 @@ export default function Settings() {
   const location = useLocation();
   const [description, setDescription] = useState('');
   const [faqs, setFaqs]               = useState([]);
+  const [blockedDomains, setBlockedDomains] = useState([]);
+  const [newBlockedSite, setNewBlockedSite] = useState('');
   const [loading, setLoading]         = useState(true);
   const [saving, setSaving]           = useState(false);
   const [toast, setToast]             = useState(false);
@@ -35,6 +37,7 @@ export default function Settings() {
       const res = await API.get('/api/settings');
       setDescription(res.data.description || '');
       setFaqs(res.data.faqs || []);
+      setBlockedDomains(res.data.blockedDomains || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -44,7 +47,7 @@ export default function Settings() {
     setSaving(true);
     setErrorMsg('');
     try {
-      await API.post('/api/settings', { description, faqs });
+      await API.post('/api/settings', { description, faqs, blockedDomains });
       setToast(true);
       setTimeout(() => setToast(false), 2500);
     } catch {
@@ -63,6 +66,21 @@ export default function Settings() {
       return next;
     });
   };
+
+  const addBlockedSite = () => {
+    const value = newBlockedSite.trim();
+    if (!value) return;
+    const host = value
+      .replace(/^[a-z][a-z0-9+.-]*:\/\//i, '')
+      .split('/')[0]
+      .replace(/^www\./i, '')
+      .toLowerCase();
+    if (!host) return;
+    setBlockedDomains(prev => (prev.includes(host) ? prev : [...prev, host]));
+    setNewBlockedSite('');
+  };
+
+  const removeBlockedSite = (i) => setBlockedDomains(prev => prev.filter((_, idx) => idx !== i));
 
   const inputStyle = {
     width: '100%',
@@ -285,6 +303,96 @@ export default function Settings() {
                             style={{ ...inputStyle, resize: 'vertical' }}
                           />
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Blocked websites */}
+              <div style={{
+                background: '#ffffff', border: '1px solid #eaecf0',
+                borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 34, height: 34, borderRadius: 10,
+                      background: '#fef2f2', border: '1px solid #fecaca',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Ban size={16} style={{ color: '#ef4444' }} />
+                    </div>
+                    <div>
+                      <h2 style={{ fontSize: 16, fontWeight: 600, color: '#0f172a', margin: 0 }}>
+                        Blocked websites
+                      </h2>
+                      <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0' }}>
+                        Visitors on these sites cannot open your support chat in their browser
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <Globe size={15} style={{ position: 'absolute', left: 12, top: 14, color: '#94a3b8' }} />
+                    <input
+                      type="text"
+                      value={newBlockedSite}
+                      onChange={e => setNewBlockedSite(e.target.value)}
+                      onFocus={focusStyle}
+                      onBlur={blurStyle}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addBlockedSite(); } }}
+                      placeholder="e.g. competitor.com or https://spam-site.example/page"
+                      style={{ ...inputStyle, paddingLeft: 34 }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addBlockedSite}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 7,
+                      padding: '9px 16px', borderRadius: 10, border: 'none',
+                      background: '#0f172a', color: '#fff',
+                      fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <Plus size={15} /> Block site
+                  </button>
+                </div>
+
+                {blockedDomains.length === 0 ? (
+                  <div style={{
+                    border: '2px dashed #cbd5e1', borderRadius: 14,
+                    padding: '24px 20px', textAlign: 'center',
+                    color: '#64748b', fontSize: 13,
+                  }}>
+                    No websites blocked. Add a domain so the chat widget will not open there.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {blockedDomains.map((site, i) => (
+                      <div key={site} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        background: '#f8fafc', border: '1px solid #eaecf0',
+                        borderRadius: 12, padding: '10px 12px',
+                      }}>
+                        <span style={{ fontSize: 13, fontFamily: 'monospace', color: '#0f172a' }}>{site}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeBlockedSite(i)}
+                          style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            color: '#94a3b8', display: 'flex', padding: 4, borderRadius: 6,
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                          onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                          title="Allow this website again"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
                     ))}
                   </div>

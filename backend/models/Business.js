@@ -11,6 +11,7 @@ const BusinessSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   description: { type: String, default: "" },
   faqs: [FAQSchema],
+  blockedDomains: { type: [String], default: [] },
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -18,15 +18,24 @@ import {
   CreditCard,
   ShieldCheck,
   X,
-  MessageSquare
+  MessageSquare,
+  Ban
 } from 'lucide-react';
 import AITextLoading from '../components/ui/ai-text-loading';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+function visitorPageUrl() {
+  const fromParam = new URLSearchParams(window.location.search).get('from');
+  if (fromParam) return fromParam;
+  if (document.referrer) return document.referrer;
+  return window.location.href;
+}
+
 export default function CustomerChat() {
   const { businessId } = useParams();
   const [sessionId, setSessionId] = useState(() => 'sess_' + Math.random().toString(36).substring(2, 10));
+  const [access, setAccess] = useState('checking');
 
   const [messages, setMessages] = useState([
     {
@@ -42,6 +51,20 @@ export default function CustomerChat() {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const pageUrl = visitorPageUrl();
+    axios
+      .get(`${API_BASE}/api/chat/access`, { params: { businessId, pageUrl } })
+      .then((res) => {
+        if (!cancelled) setAccess(res.data?.allowed === false ? 'blocked' : 'allowed');
+      })
+      .catch((err) => {
+        if (!cancelled) setAccess(err.response?.status === 403 ? 'blocked' : 'allowed');
+      });
+    return () => { cancelled = true; };
+  }, [businessId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,12 +84,17 @@ export default function CustomerChat() {
         sessionId,
         userMessage: query,
         businessId,
+        pageUrl: visitorPageUrl(),
       });
 
       const reply = res.data.reply || "I'll connect you with our team.";
       const flagged = res.data.flagged || false;
       setMessages((prev) => [...prev, { role: 'ai', content: reply, flagged }]);
     } catch (err) {
+      if (err.response?.status === 403) {
+        setAccess('blocked');
+        return;
+      }
       setMessages((prev) => [
         ...prev,
         {
@@ -123,6 +151,74 @@ export default function CustomerChat() {
     { label: '🔄 Return Policy', query: 'What is your return policy?' },
     { label: '❓ Contact Support', query: 'How do I connect with a support agent?' },
   ];
+
+  if (access === 'checking') {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          color: '#64748b',
+          fontSize: 14,
+        }}
+      >
+        Checking access…
+      </div>
+    );
+  }
+
+  if (access === 'blocked') {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'radial-gradient(circle at 50% 10%, #f3f4f6 0%, #f8fafc 50%, #f1f5f9 100%)',
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 420,
+            textAlign: 'center',
+            background: '#ffffff',
+            border: '1px solid #eaecf0',
+            borderRadius: 20,
+            padding: '40px 32px',
+            boxShadow: '0 20px 40px -15px rgba(0,0,0,0.08)',
+          }}
+        >
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 16,
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+            }}
+          >
+            <Ban size={26} style={{ color: '#ef4444' }} />
+          </div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0f172a', margin: '0 0 8px' }}>
+            Chat unavailable
+          </h1>
+          <p style={{ fontSize: 14, color: '#64748b', margin: 0, lineHeight: 1.6 }}>
+            This support chat is not available on this website.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
