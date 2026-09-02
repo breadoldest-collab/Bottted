@@ -1080,7 +1080,15 @@
 
     /* Bookmarklet: compact; overlays on body so YouTube can't eat them */
     const bookmarkletSrc = `(function(){
-      if(window.__ptPanel){var p=window.__ptPanel;p.style.display=p.style.display==='none'?'':'none';return;}
+      try{
+      function fsHost(){var fs=document.fullscreenElement||document.webkitFullscreenElement;if(!fs)return document.body;if(fs.tagName==='VIDEO')return fs.parentElement||document.body;return fs;}
+      var existing=window.__ptPanel;
+      if(existing&&existing.isConnected){
+        if(existing.style.display==='none'){existing.style.display='block';existing.style.zIndex='2147483647';fsHost().appendChild(existing);}
+        else existing.style.display='none';
+        return;
+      }
+      if(window.__ptKill){try{window.__ptKill();}catch(e){}}
       var S={},state={};
       function el(t,id,s){var n=document.createElement(t);n.id=id;n.className='__ptx';n.style.cssText=s;return n;}
       function rm(id){var n=document.querySelectorAll('[id="'+id+'"]');for(var i=n.length-1;i>=0;i--)n[i].remove();}
@@ -1198,6 +1206,7 @@
       hdr.onmousedown=function(e){if(e.target.id==='__pt_x__')return;drag=true;ox=e.clientX-panel.offsetLeft;oy=e.clientY-panel.offsetTop;panel.style.right='auto';};
       document.onmousemove=function(e){if(drag){panel.style.left=(e.clientX-ox)+'px';panel.style.top=(e.clientY-oy)+'px';}};
       document.onmouseup=function(){drag=false;};
+      }catch(err){alert('Page Tools failed: '+err);}
     })();`;
     const href = 'javascript:' + encodeURIComponent(bookmarkletSrc);
     document.getElementById('bookmarklet').href = href;
